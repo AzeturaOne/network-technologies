@@ -7,5 +7,5 @@ COPY ./app /project/app
 
 EXPOSE 80
 
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["python", "-m", "uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "80"]
 
