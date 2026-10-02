@@ -52,6 +52,7 @@ docker build --rm -t network-technologies .
 docker run --rm --name network-technologies -p 8000:80 network-technologies:latest
 ```
 В Linux-системах выполняейте команду от имени root, если не используете rootless docker.
+
 ---
 # Примеры запросов:
 
@@ -176,4 +177,4 @@ curl -X DELETE 'http://127.0.0.1:8000/task/2'
 **Если записи нет**
 ```json
 { "massage": "Задачи с таким ID не существует."}
----
+```
