@@ -5,3 +5,6 @@ class Task(BaseModel):
     title: str
     description: str
     status: str
+
+class TaskList(BaseModel):
+    tasks: list[Task]
