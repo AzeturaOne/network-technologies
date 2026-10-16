@@ -1,0 +1,95 @@
+{% extends "home.html" %}
+
+{% block todo_container %}
+<main class="container">
+    <section class="container-fluid">
+        {% if edit_task %}
+            <h2>Изменение задачи №{{ edit_task.id }}</h2>
+            <form method="post" action="/tasks/{{ edit_task.id }}/edit" class="card card-body mb-4">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Название задачи</label>
+                    <input id="title" class="form-control" type="text" name="title" value="{{ edit_task.title }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание</label>
+                    <textarea id="description" class="form-control" name="description" rows="3">{{ edit_task.description }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="task_status" class="form-label">Статус</label>
+                    <select id="task_status" class="form-select" name="task_status">
+                        {% for status_option in ["Новая", "В процессе", "Выполнена"] %}
+                            <option value="{{ status_option }}" {% if edit_task.status == status_option %}selected{% endif %}>{{ status_option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                    <a class="btn btn-secondary" href="/tasks/{{ edit_task.id }}">Отмена</a>
+                </div>
+            </form>
+        {% elif todo %}
+            <article class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Задача №{{ todo.id }}: {{ todo.title }}</h2>
+                    <p><strong>Описание:</strong> {{ todo.description | default("Описание не указано", true) }}</p>
+                    <p><strong>Статус:</strong> {{ todo.status }}</p>
+                    <a class="btn btn-primary" href="/tasks/{{ todo.id }}/edit">Изменить</a>
+                    <form method="post" action="/tasks/{{ todo.id }}/delete" class="d-inline"
+                          onsubmit="return confirm('Удалить эту задачу?');">
+                        <button class="btn btn-danger" type="submit">Удалить</button>
+                    </form>
+                    <a class="btn btn-secondary" href="/tasks">К списку задач</a>
+                </div>
+            </article>
+        {% else %}
+            <h2 class="text-center">Задачи</h2>
+            <form method="post" action="/tasks" class="card card-body mb-4">
+                <h3 class="h5">Добавить новую задачу</h3>
+                <div class="mb-3">
+                    <label for="title" class="form-label">Название задачи</label>
+                    <input id="title" class="form-control" type="text" name="title" placeholder="Введите название задачи" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание</label>
+                    <textarea id="description" class="form-control" name="description" rows="2" placeholder="Введите описание"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="task_status" class="form-label">Статус</label>
+                    <select id="task_status" class="form-select" name="task_status">
+                        <option value="Новая">Новая</option>
+                        <option value="В процессе">В процессе</option>
+                        <option value="Выполнена">Выполнена</option>
+                    </select>
+                </div>
+                <div><button class="btn btn-primary" type="submit">Добавить задачу</button></div>
+            </form>
+
+            <h3 class="text-center">Список задач</h3>
+            {% if todos | length > 0 %}
+                <div class="card">
+                    <ul class="list-group list-group-flush">
+                        {% for todo in todos %}
+                            <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div>
+                                    <strong>{{ loop.index }}. {{ todo.title }}</strong>
+                                    <div class="text-muted small">Статус: {{ todo.status }}</div>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a class="btn btn-sm btn-outline-primary" href="/tasks/{{ todo.id }}">Просмотр</a>
+                                    <a class="btn btn-sm btn-outline-secondary" href="/tasks/{{ todo.id }}/edit">Изменить</a>
+                                    <form method="post" action="/tasks/{{ todo.id }}/delete"
+                                          onsubmit="return confirm('Удалить эту задачу?');">
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+                                    </form>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <p class="text-center text-muted">Список задач пуст. Добавьте первую задачу с помощью формы выше.</p>
+            {% endif %}
+        {% endif %}
+    </section>
+</main>
+{% endblock %}
