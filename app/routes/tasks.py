@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Path, Body, HTTPException, status, Request, Form
+from fastapi import APIRouter, Path, Body, HTTPException, status, Request, Form, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.model import Task, TaskList
+from app.models.tasks import Task, TaskList
+from app.routes.users import get_current_user, users
 
-task_router = APIRouter()
+task_router = APIRouter(tags=["Tasks"])
 templates = Jinja2Templates(directory="templates")
 
-# Хранение в памяти, как в исходном проекте.
 task_list: list[Task] = []
 
 
@@ -100,10 +100,10 @@ async def delete_task_from_form(task_id: int):
     raise HTTPException(status_code=404, detail="Задача с таким ID не существует.")
 
 
-# -------------------- Существующий REST API --------------------
+# -------------------- REST API --------------------
 
-@task_router.post("/task", status_code=201)
-async def add_task(task: Task) -> dict:
+@task_router.post("/task", status_code=status.HTTP_201_CREATED)
+async def add_task(task: Task = Body(...), current_user: str = Depends(get_current_user)) -> dict:
     if any(existing.id == task.id for existing in task_list):
         raise HTTPException(status_code=409, detail="Задача с таким ID уже существует.")
     task_list.append(task)
@@ -111,45 +111,55 @@ async def add_task(task: Task) -> dict:
 
 
 @task_router.get("/task", response_model=TaskList)
-async def retrieve_tasks() -> dict:
+async def retrieve_tasks(current_user: str = Depends(get_current_user)) -> dict:
     return {"tasks": task_list}
 
 
 @task_router.get("/task/{task_id}", response_model=Task)
-async def get_single_task(task_id: int = Path(..., title="ID задачи которую мы хотим получить.")):
+async def get_single_task(task_id: int = Path(..., title="ID задачи которую мы хотим получить."), current_user: str = Depends(get_current_user)):
     for task in task_list:
         if task.id == task_id:
             return task
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Задача с таким ID не существует.")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Задача с таким ID не существует.",
+    )
 
 
 @task_router.put("/task/{task_id}")
 async def update_task(
     task_id: int = Path(..., title="ID задачи, которую мы хотим обновить."),
     task: Task = Body(..., title="Новые данные задачи."),
+    current_user: str = Depends(get_current_user)
 ) -> dict:
     for i, existing in enumerate(task_list):
         if existing.id == task_id:
             if task.id != task_id:
-                raise HTTPException(status_code=400, detail="ID задачи в URL и теле запроса должны совпадать.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="ID задачи в URL и теле запроса должны совпадать.",
+                )
             task_list[i] = task
             return {"message": "Задача обновлена.", "task": task}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Задача с таким ID не существует.")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Задача с таким ID не существует.",
+    )
 
 
 @task_router.delete("/task/{task_id}")
-async def remove_task(task_id: int = Path(..., title="ID задачи которую мы хотим удалить.")) -> dict:
+async def remove_task(task_id: int = Path(..., title="ID задачи которую мы хотим удалить."), current_user: str = Depends(get_current_user)) -> dict:
     for i, task in enumerate(task_list):
         if task.id == task_id:
             task_list.pop(i)
             return {"message": "Задача удалена"}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Задача с таким ID не существует.")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Задача с таким ID не существует.",
+    )
 
 
 @task_router.delete("/task")
-async def remove_all_tasks() -> dict:
+async def remove_all_tasks(current_user: str = Depends(get_current_user)) -> dict:
     task_list.clear()
     return {"message": "Все задачи удалены"}
