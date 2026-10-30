@@ -1,47 +1,42 @@
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
+from sqlmodel import SQLModel, Field, Relationship
 from pydantic import BaseModel, EmailStr, ConfigDict
-from app.models.tasks import Task
+
+if TYPE_CHECKING:
+    from app.models.tasks import Task
 
 
-class User(BaseModel):
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: EmailStr = Field(unique=True, index=True)
+    password: str
+    username: Optional[str] = None
+
+    tasks: List["Task"] = Relationship(
+        sa_relationship_kwargs={
+            "back_populates": "user",
+            "cascade": "all, delete-orphan",
+        }
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "azetura_one@uust.ru",
+                "username": "azetura_one",
+            }
+        }
+    )
+
+
+class NewUser(BaseModel):
     email: EmailStr
     password: str
     username: Optional[str] = None
-    tasks: Optional[list[Task]] = []
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "email": "azetura_one@uust.ru",
-                "username": "azetura_one",
-                "tasks": [],
-            }
-        }
-    )
-
-
-class NewUser(User):
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "email": "azetura_one@uust.ru",
-                "password": "The_best_password_ever_123_!@#",
-                "username": "azetura_one",
-                "tasks": [],
-            }
-        }
-    )
 
 
 class UserSignIn(BaseModel):
     email: EmailStr
     password: str
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "email": "azetura_one@uust.ru",
-                "password": "The_best_password_ever_123_!@#",
-            }
-        }
-    )
